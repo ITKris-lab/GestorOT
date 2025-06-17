@@ -1,9 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
-from config import Config
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 import os
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO, emit
@@ -13,6 +11,10 @@ from flask import jsonify
 import io
 import pandas as pd
 from flask import send_file
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def notificar_tecnicos_y_admins(mensaje, tipo='info'):
     socketio.emit('nueva_notificacion', {
@@ -23,10 +25,15 @@ def notificar_tecnicos_y_admins(mensaje, tipo='info'):
 
 
 app = Flask(__name__)
-app.config.from_object(Config)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-db = SQLAlchemy(app)
+# Inicializar Supabase
+supabase: Client = create_client(
+    os.getenv('SUPABASE_URL'),
+    os.getenv('SUPABASE_KEY')
+)
+
 socketio = SocketIO(app)
 
 # Setup de Flask-Login
@@ -34,14 +41,45 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
-# Modelos
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
-    nombre = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+# Modelo de Usuario
+class User(UserMixin):
+    def __init__(self, id, username, password, role, nombre, email):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.role = role
+        self.nombre = nombre
+        self.email = email
+
+    @staticmethod
+    def get(user_id):
+        response = supabase.table('users').select('*').eq('id', user_id).execute()
+        if response.data:
+            user_data = response.data[0]
+            return User(
+                id=user_data['id'],
+                username=user_data['username'],
+                password=user_data['password'],
+                role=user_data['role'],
+                nombre=user_data['nombre'],
+                email=user_data['email']
+            )
+        return None
+
+    @staticmethod
+    def get_by_username(username):
+        response = supabase.table('users').select('*').eq('username', username).execute()
+        if response.data:
+            user_data = response.data[0]
+            return User(
+                id=user_data['id'],
+                username=user_data['username'],
+                password=user_data['password'],
+                role=user_data['role'],
+                nombre=user_data['nombre'],
+                email=user_data['email']
+            )
+        return None
 
 asignaciones_tecnicos = db.Table('asignaciones_tecnicos',
     db.Column('solicitud_id', db.Integer, db.ForeignKey('solicitud.id')),
@@ -63,14 +101,7 @@ class Solicitud(db.Model):
     tecnicos_asignados = db.relationship('User', secondary=asignaciones_tecnicos, backref='solicitudes_asignadas')
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     firma = db.Column(db.String(128))
-    comentarios = db.relationship('Comentario', backref='solicitud', lazy=True)
-    tiempo_estimado = db.Column(db.Integer)  # en minutos
-    tiempo_real = db.Column(db.Integer)      # en minutos
-    materiales_utilizados = db.Column(db.Text)
-    costo_estimado = db.Column(db.Float)
-    costo_real = db.Column(db.Float)
-    evaluacion = db.Column(db.Integer)       # 1-5 estrellas
-    feedback = db.Column(db.Text)
+ 
 
     usuario = db.relationship('User', foreign_keys=[usuario_id])
 
@@ -95,7 +126,7 @@ class Comentario(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))
+    return User.get(user_id)
 
 # Crear tablas
 with app.app_context():
@@ -111,13 +142,13 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
+        user = User.get_by_username(username)
 
         if user and check_password_hash(user.password, password):
             login_user(user)
             if user.role == 'admin':
                 return redirect(url_for('admin_dashboard'))
-            elif user.role  == 'tecnico':
+            elif user.role == 'tecnico':
                 return redirect(url_for('tecnico_dashboard'))
             return redirect(url_for('user_dashboard'))
         flash('Usuario o contraseña incorrectos', 'danger')
@@ -132,13 +163,22 @@ def register():
         email = request.form['email']
         role = request.form['role']
 
-        if User.query.filter_by(username=username).first():
+        # Verificar si el usuario ya existe
+        existing_user = User.get_by_username(username)
+        if existing_user:
             flash('El nombre de usuario ya existe', 'danger')
             return redirect(url_for('register'))
 
-        new_user = User(username=username, password=password, nombre=nombre, email=email, role=role)
-        db.session.add(new_user)
-        db.session.commit()
+        # Crear nuevo usuario en Supabase
+        new_user = {
+            'username': username,
+            'password': password,
+            'nombre': nombre,
+            'email': email,
+            'role': role
+        }
+        response = supabase.table('users').insert(new_user).execute()
+        
         flash('Registro exitoso. Por favor inicie sesión.', 'success')
         return redirect(url_for('login'))
 
@@ -610,4 +650,4 @@ with app.app_context():
         print("ℹ️ Usuario admin ya existe.")
 
 if __name__ == '__main__':
-    socketio.run(app, host='10.68.118.135', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
