@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Panel de Usuario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">Mis Solicitudes</h2>
+        <p class="text-muted mb-0">Aquí puedes ver el estado de tus solicitudes de mantenimiento</p>
+    </div>
+    <a href="{{ url_for('nueva_solicitud') }}" class="btn btn-primary">+ Nueva Solicitud</a>
+</div>
+
+{# 📱 Vista tipo tarjeta en móviles #}
+<div class="d-block d-md-none">
+  <div class="row gy-3">
+    {% for solicitud in solicitudes %}
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">#{{ solicitud.id }} - {{ solicitud.tipo_trabajo }}</h6>
+            <span class="badge 
+              {% if solicitud.estado == 'Pendiente' %}bg-secondary
+              {% elif solicitud.estado == 'En Proceso' %}bg-warning text-dark
+              {% else %}bg-success{% endif %}">
+              {{ solicitud.estado }}
+            </span>
+          </div>
+          <p class="mb-1"><strong>Actividad:</strong> {{ solicitud.tipo_actividad }}</p>
+          <p class="mb-1"><strong>Fecha:</strong> {{ solicitud.fecha_creacion.strftime('%d-%m-%Y') }}</p>
+          <p class="mb-1"><strong>Evidencia:</strong>
+            {% if solicitud.estado == 'Finalizado' and solicitud.foto %}
+              <a href="{{ url_for('static', filename='uploads/' ~ solicitud.foto) }}" target="_blank">Ver</a>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </p>
+          <p class="mb-1"><strong>Firma:</strong>
+            {% if solicitud.estado == 'Finalizado' and solicitud.firma %}
+              <a href="{{ url_for('static', filename='uploads/' ~ solicitud.firma) }}" target="_blank">Ver</a>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted">Aún no tienes solicitudes</div>
+    {% endfor %}
+  </div>
+</div>
+
+{# 💻 Vista tabla para escritorio #}
+<div class="table-responsive d-none d-md-block">
+  <table class="table align-middle table-hover">
+    <thead class="table-primary text-center">
+      <tr>
+        <th>ID</th>
+        <th>Trabajo</th>
+        <th>Actividad</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+        <th>Evidencia</th>
+        <th>Firma</th>
+      </tr>
+    </thead>
+    <tbody class="text-center">
+      {% for solicitud in solicitudes %}
+      <tr>
+        <td>#{{ solicitud.id }}</td>
+        <td>{{ solicitud.tipo_trabajo }}</td>
+        <td>{{ solicitud.tipo_actividad }}</td>
+        <td>
+          <span class="badge 
+            {% if solicitud.estado == 'Pendiente' %}bg-secondary
+            {% elif solicitud.estado == 'En Proceso' %}bg-warning text-dark
+            {% elif solicitud.estado == 'Finalizado' %}bg-success
+            {% else %}bg-light text-dark{% endif %}">
+            {{ solicitud.estado }}
+          </span>
+        </td>
+        <td>{{ solicitud.fecha_creacion.strftime('%d-%m-%Y') if solicitud.fecha_creacion else '---' }}</td>
+        <td>
+          {% if solicitud.estado == 'Finalizado' and solicitud.foto %}
+            <a href="{{ url_for('static', filename='uploads/' ~ solicitud.foto) }}" target="_blank">Ver</a>
+          {% else %}
+            <span class="text-muted">-</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if solicitud.estado == 'Finalizado' and solicitud.firma %}
+            <a href="{{ url_for('static', filename='uploads/' ~ solicitud.firma) }}" target="_blank">Ver</a>
+          {% else %}
+            <span class="text-muted">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7" class="text-center text-muted">Aún no tienes solicitudes</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Editar Solicitud{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card shadow-sm mx-auto" style="max-width: 800px;">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">📝 Editar Solicitud #{{ solicitud.id }}</h4>
+    </div>
+    <div class="card-body">
+      <form action="{{ url_for('editar_solicitud', solicitud_id=solicitud.id) }}" method="POST" enctype="multipart/form-data">
+        <div class="row g-3">
+          <!-- Tipo de Trabajo -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tipo de Trabajo <span class="text-danger">*</span></label>
+            <select class="form-select" name="tipo_trabajo" required>
+              <option value="">Seleccione tipo de trabajo</option>
+              {% for trabajo in ['Climatización','Eléctrica','Mecánica','Electrónica','Operación','Fontanería','Albañilería','Pintura','Carpintería','Redes'] %}
+                <option value="{{ trabajo }}" {% if trabajo == solicitud.tipo_trabajo %}selected{% endif %}>{{ trabajo }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Tipo de Actividad -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tipo de Actividad <span class="text-danger">*</span></label>
+            <select class="form-select" name="tipo_actividad" required>
+              <option value="">Seleccione tipo de actividad</option>
+              {% for actividad in ['Reparación','Mantenimiento','Mejoramiento','Instalación','Traslado','Revisión','Limpieza','Reemplazo','Verificación','Configuración'] %}
+                <option value="{{ actividad }}" {% if actividad == solicitud.tipo_actividad %}selected{% endif %}>{{ actividad }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Descripción -->
+          <div class="col-12">
+            <label class="form-label fw-bold">Descripción Detallada <span class="text-danger">*</span></label>
+            <textarea class="form-control" name="descripcion" rows="4" required>{{ solicitud.descripcion }}</textarea>
+          </div>
+
+          <!-- Ubicación -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Ubicación <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="ubicacion" required value="{{ solicitud.ubicacion }}">
+          </div>
+
+          <!-- Prioridad -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Prioridad <span class="text-danger">*</span></label>
+            <select class="form-select" name="prioridad" required>
+              <option value="">Seleccione nivel de prioridad</option>
+              <option value="Bajo" {% if solicitud.prioridad == 'Bajo' %}selected{% endif %}>Bajo</option>
+              <option value="Medio" {% if solicitud.prioridad == 'Medio' %}selected{% endif %}>Medio</option>
+              <option value="Alto" {% if solicitud.prioridad == 'Alto' %}selected{% endif %}>Alto</option>
+            </select>
+          </div>
+
+          <!-- Estado -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Estado <span class="text-danger">*</span></label>
+            <select class="form-select" name="estado" required>
+              <option value="Pendiente" {% if solicitud.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+              <option value="En Proceso" {% if solicitud.estado == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+              <option value="Finalizado" {% if solicitud.estado == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+            </select>
+          </div>
+
+          <!-- Imágenes -->
+          <div class="col-12">
+            <label class="form-label fw-bold">Imágenes del Problema <small class="text-muted">(Opcional)</small></label>
+            {% if solicitud.foto %}
+              <div class="mb-2">
+                <img src="{{ url_for('static', filename='uploads/' ~ solicitud.foto) }}" class="img-thumbnail" style="max-height: 200px;">
+                <p class="text-muted small">Imagen actual</p>
+              </div>
+            {% endif %}
+            <input type="file" class="form-control" name="foto" accept="image/*">
+            <div class="form-text">Deja vacío para mantener la imagen actual</div>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %} 

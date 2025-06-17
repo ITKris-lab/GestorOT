@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Panel de Reportes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h2 class="mb-4">📊 Reportes de Solicitudes</h2>
+
+  <!-- Formulario de Filtros -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="POST" class="row g-3" id="filtros-form">
+        <div class="col-md-3">
+          <label class="form-label">Estado</label>
+          <select class="form-select" name="estado">
+            <option {% if filtros.estado == 'Todos' %}selected{% endif %}>Todos</option>
+            <option value="Pendiente" {% if filtros.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="En Proceso" {% if filtros.estado == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+            <option value="Finalizado" {% if filtros.estado == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Desde</label>
+          <input type="date" class="form-control" name="fecha_inicio" value="{{ filtros.fecha_inicio }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Hasta</label>
+          <input type="date" class="form-control" name="fecha_fin" value="{{ filtros.fecha_fin }}">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Botón de exportación -->
+  <form action="{{ url_for('exportar_excel') }}" method="post" class="mb-3">
+    <input type="hidden" name="estado" value="{{ filtros.estado }}">
+    <input type="hidden" name="fecha_inicio" value="{{ filtros.fecha_inicio }}">
+    <input type="hidden" name="fecha_fin" value="{{ filtros.fecha_fin }}">
+    <button type="submit" class="btn btn-success">📥 Exportar a Excel</button>
+  </form>
+
+  <!-- Tabla de resultados -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle text-center">
+          <thead class="table-dark sticky-top">
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Trabajo</th>
+              <th>Actividad</th>
+              <th>Estado</th>
+              <th>Creación</th>
+              <th>Finalización</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in solicitudes %}
+            <tr>
+              <td>#{{ s.id }}</td>
+              <td>{{ s.usuario.nombre }}</td>
+              <td>{{ s.tipo_trabajo }}</td>
+              <td>{{ s.tipo_actividad }}</td>
+              <td>
+                <span class="badge 
+                  {% if s.estado == 'Pendiente' %}bg-secondary
+                  {% elif s.estado == 'En Proceso' %}bg-warning text-dark
+                  {% elif s.estado == 'Finalizado' %}bg-success
+                  {% endif %}">
+                  {{ s.estado }}
+                </span>
+              </td>
+              <td>{{ s.fecha_creacion.strftime('%d-%m-%Y') }}</td>
+              <td>{{ s.fecha_finalizacion.strftime('%d-%m-%Y') if s.fecha_finalizacion else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted">No hay resultados</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos -->
+  <hr class="my-5">
+  <h4 class="mb-4">📈 Visualización Gráfica de Solicitudes</h4>
+  <div class="row">
+    <div class="col-md-6"><canvas id="graficoBarras"></canvas></div>
+    <div class="col-md-6"><canvas id="graficoDoughnut"></canvas></div>
+  </div>
+</div>
+
+<!-- Chart.js + Datalabels -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const etiquetas = {{ etiquetas | tojson }};
+  const totales   = {{ totales | tojson }};
+  const totalGeneral = totales.reduce((a, b) => a + b, 0);
+  const colores = etiquetas.map(() => '#' + Math.floor(Math.random()*16777215).toString(16));
+
+  Chart.register(ChartDataLabels);
+
+  const opcionesTooltips = {
+    responsive: true,
+    plugins: {
+      datalabels: {
+        color: '#000',
+        formatter: (value) => `${((value / totalGeneral) * 100).toFixed(1)}%`,
+        anchor: 'end',
+        align: 'top',
+        font: { weight: 'bold' }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let valor = context.raw;
+            let porcentaje = ((valor / totalGeneral) * 100).toFixed(1);
+            return `${context.label}: ${valor} (${porcentaje}%)`;
+          }
+        }
+      },
+      legend: { display: true }
+    }
+  };
+
+  new Chart(document.getElementById('graficoBarras'), {
+    type: 'bar',
+    data: {
+      labels: etiquetas,
+      datasets: [{
+        label: 'Solicitudes',
+        data: totales,
+        backgroundColor: colores
+      }]
+    },
+    options: opcionesTooltips,
+    plugins: [ChartDataLabels]
+  });
+
+  new Chart(document.getElementById('graficoDoughnut'), {
+    type: 'doughnut',
+    data: {
+      labels: etiquetas,
+      datasets: [{
+        data: totales,
+        backgroundColor: colores
+      }]
+    },
+    options: {
+      ...opcionesTooltips,
+      plugins: {
+        ...opcionesTooltips.plugins,
+        datalabels: {
+          color: '#fff',
+          formatter: (value) => `${((value / totalGeneral) * 100).toFixed(1)}%`,
+          font: { weight: 'bold', size: 14 }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+});
+</script>
+{% endblock %}

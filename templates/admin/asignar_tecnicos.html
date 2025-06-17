@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Asignar Técnicos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Asignar Técnicos a Solicitud #{{ solicitud.id }}</h5>
+    </div>
+    <div class="card-body">
+      <p><strong>Trabajo:</strong> {{ solicitud.tipo_trabajo }} - {{ solicitud.tipo_actividad }}</p>
+      <p><strong>Descripción:</strong> {{ solicitud.descripcion }}</p>
+
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Selecciona uno o más técnicos</label>
+          <select class="form-select" name="tecnicos" multiple required size="6">
+            {% for tecnico in tecnicos %}
+              <option value="{{ tecnico.id }}" {% if tecnico in solicitud.tecnicos_asignados %}selected{% endif %}>
+                {{ tecnico.nombre }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">Usa Ctrl (Windows) o Cmd (Mac) para seleccionar varios.</div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-success">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

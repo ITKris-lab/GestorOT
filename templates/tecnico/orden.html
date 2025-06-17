@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Solicitud #{{ solicitud.id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">⚙️ Gestión de Solicitud N°{{ solicitud.id }}</h5>
+    </div>
+
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <p><strong>📌 Solicitante:</strong> {{ solicitud.usuario.nombre }}</p>
+          <p><strong>📍 Ubicación:</strong> {{ solicitud.ubicacion }}</p>
+          <p><strong>🔧 Trabajo:</strong> {{ solicitud.tipo_trabajo }}</p>
+          <p><strong>🔁 Actividad:</strong> {{ solicitud.tipo_actividad }}</p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>🔥 Prioridad:</strong> 
+            <span class="badge 
+              {% if solicitud.prioridad == 'Alto' %}bg-danger
+              {% elif solicitud.prioridad == 'Medio' %}bg-warning text-dark
+              {% else %}bg-secondary{% endif %}">
+              {{ solicitud.prioridad }}
+            </span>
+          </p>
+          <p><strong>📌 Estado:</strong> 
+            <span class="badge 
+              {% if solicitud.estado == 'Pendiente' %}bg-secondary
+              {% elif solicitud.estado == 'En Proceso' %}bg-warning text-dark
+              {% elif solicitud.estado == 'Finalizado' %}bg-success
+              {% else %}bg-light text-dark{% endif %}">
+              {{ solicitud.estado }}
+            </span>
+          </p>
+          <p><strong>📅 Fecha de Creación:</strong> {{ solicitud.fecha_creacion.strftime('%d-%m-%Y') }}</p>
+        </div>
+      </div>
+
+      <p><strong>📝 Descripción:</strong></p>
+      <p class="text-muted">{{ solicitud.descripcion }}</p>
+
+      {% if solicitud.foto %}
+        <div class="mb-3">
+          <p><strong>📷 Evidencia del Usuario:</strong></p>
+          <img src="{{ url_for('static', filename='uploads/' ~ solicitud.foto) }}"
+               class="img-fluid rounded border"
+               style="max-width: 300px;">
+        </div>
+      {% endif %}
+
+      <hr class="my-4">
+
+      <form method="POST" enctype="multipart/form-data">
+        <!-- Estado -->
+        <div class="mb-3">
+          <label for="estado" class="form-label fw-bold">Actualizar Estado</label>
+          <select id="estado" name="estado" class="form-select" required>
+            <option value="En Proceso" {% if solicitud.estado == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+            <option value="Finalizado" {% if solicitud.estado == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+          </select>
+        </div>
+
+        <!-- Evidencia -->
+        <div class="mb-3">
+          <label for="evidencia" class="form-label fw-bold">Subir Evidencia <small class="text-muted">(opcional)</small></label>
+          <input type="file" id="evidencia" name="evidencia" class="form-control" accept="image/*">
+        </div>
+
+        <!-- Firma -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">Firma del Solicitante</label>
+          <canvas id="firmaCanvas" width="400" height="150" class="w-100 border rounded"></canvas>
+          <input type="hidden" name="firma" id="firmaInput">
+          <div class="mt-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limpiarFirma()">🧹 Limpiar Firma</button>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{{ url_for('tecnico_dashboard') }}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-success">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// selecciona el canvas y su contenedor
+const canvas = document.getElementById("firmaCanvas");
+const container = canvas.parentElement;
+
+// ajustar DPI y tamaño al contenedor
+function resizeCanvas() {
+  // tamaño real en pixeles
+  const ratio = window.devicePixelRatio || 1;
+  const w = container.clientWidth;
+  const h = 150;  // altura fija, puedes cambiarla
+  canvas.style.width  = w + "px";
+  canvas.style.height = h + "px";
+  canvas.width  = w * ratio;
+  canvas.height = h * ratio;
+  ctx.scale(ratio, ratio);
+}
+const ctx = canvas.getContext("2d");
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+// estado de dibujo
+let drawing = false;
+
+// función para obtener posición relativa
+function getPos(evt) {
+  const rect = canvas.getBoundingClientRect();
+  if (evt.touches) { // touch event
+    return {
+      x: evt.touches[0].clientX - rect.left,
+      y: evt.touches[0].clientY - rect.top
+    };
+  } else { // mouse event
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+  }
+}
+
+// inicio de trazo
+function startDraw(evt) {
+  evt.preventDefault();
+  drawing = true;
+  const pos = getPos(evt);
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+}
+
+// trazo
+function moveDraw(evt) {
+  if (!drawing) return;
+  evt.preventDefault();
+  const pos = getPos(evt);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  // y volver a iniciar camino para suavizar
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+}
+
+// fin de trazo
+function endDraw(evt) {
+  if (!drawing) return;
+  evt.preventDefault();
+  drawing = false;
+  // guardar imagen en el campo oculto
+  document.getElementById("firmaInput").value = canvas.toDataURL();
+}
+
+// configurar estilo
+ctx.lineWidth = 2;
+ctx.lineCap   = "round";
+ctx.strokeStyle = "#000";
+
+// eventos ratón
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("mousemove", moveDraw);
+canvas.addEventListener("mouseup",   endDraw);
+canvas.addEventListener("mouseout",  endDraw);
+
+// eventos táctiles
+canvas.addEventListener("touchstart", startDraw);
+canvas.addEventListener("touchmove",  moveDraw);
+canvas.addEventListener("touchend",   endDraw);
+
+// botón de limpiar
+function limpiarFirma() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById("firmaInput").value = '';
+}
+</script>
+
+{% endblock %}

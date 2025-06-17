@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Gestionar Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h2 class="mb-2">👥 Gestión de Usuarios y Técnicos</h2>
+    <a href="{{ url_for('admin_usuario_nuevo') }}" class="btn btn-success">+ Nuevo Usuario</a>
+  </div>
+
+  <!-- Vista tipo tabla para pantallas medianas en adelante -->
+  <div class="card shadow-sm d-none d-md-block">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle text-center">
+          <thead class="table-dark sticky-top">
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in usuarios %}
+            <tr>
+              <td>{{ u.id }}</td>
+              <td>{{ u.username }}</td>
+              <td>{{ u.nombre }}</td>
+              <td class="text-break" style="max-width: 250px;">{{ u.email }}</td>
+              <td>
+                <span class="badge 
+                  {% if u.role == 'admin' %}bg-danger
+                  {% elif u.role == 'tecnico' %}bg-info text-dark
+                  {% elif u.role == 'user' %}bg-secondary
+                  {% endif %}">{{ u.role|capitalize }}</span>
+              </td>
+              <td class="d-flex justify-content-center flex-wrap gap-2">
+                <a href="{{ url_for('admin_usuario_editar', user_id=u.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <form action="{{ url_for('admin_usuario_eliminar', user_id=u.id) }}"
+                      method="POST" onsubmit="return confirm('¿Eliminar usuario {{ u.username }}?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista tipo tarjetas para pantallas pequeñas -->
+  <div class="d-block d-md-none">
+    {% for u in usuarios %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title mb-1">{{ u.nombre }}</h5>
+        <p class="card-text mb-1"><strong>Usuario:</strong> {{ u.username }}</p>
+        <p class="card-text mb-1"><strong>Email:</strong> <br><span class="text-break">{{ u.email }}</span></p>
+        <p class="card-text">
+          <strong>Rol:</strong>
+          <span class="badge 
+            {% if u.role == 'admin' %}bg-danger
+            {% elif u.role == 'tecnico' %}bg-info text-dark
+            {% elif u.role == 'user' %}bg-secondary
+            {% endif %}">{{ u.role|capitalize }}</span>
+        </p>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('admin_usuario_editar', user_id=u.id) }}" class="btn btn-sm btn-outline-primary w-100">Editar</a>
+          <form action="{{ url_for('admin_usuario_eliminar', user_id=u.id) }}" method="POST" class="w-100"
+                onsubmit="return confirm('¿Eliminar usuario {{ u.username }}?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger w-100">Eliminar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

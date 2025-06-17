@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Solicitud{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card shadow-sm mx-auto" style="max-width: 800px;">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">📝 Crear Nueva Solicitud</h4>
+    </div>
+    <div class="card-body">
+      <form action="{{ url_for('nueva_solicitud') }}" method="POST" enctype="multipart/form-data" id="solicitudForm">
+        <div class="row g-3">
+          <!-- Tipo de Trabajo -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tipo de Trabajo <span class="text-danger">*</span></label>
+            <select class="form-select" name="tipo_trabajo" required>
+              <option value="">Seleccione tipo de trabajo</option>
+              {% for trabajo in ['Climatización','Eléctrica','Mecánica','Electrónica','Operación','Fontanería','Albañilería','Pintura','Carpintería'] %}
+                <option value="{{ trabajo }}">{{ trabajo }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Tipo de Actividad -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tipo de Actividad <span class="text-danger">*</span></label>
+            <select class="form-select" name="tipo_actividad" required>
+              <option value="">Seleccione tipo de actividad</option>
+              {% for actividad in ['Reparación','Mantenimiento','Mejoramiento','Instalación','Traslado','Revisión','Limpieza','Reemplazo','Verificación'] %}
+                <option value="{{ actividad }}">{{ actividad }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Descripción -->
+          <div class="col-12">
+            <label class="form-label fw-bold">Descripción Detallada <span class="text-danger">*</span></label>
+            <textarea class="form-control" name="descripcion" rows="4" required 
+                      placeholder="Explique el problema o la tarea requerida…"
+                      minlength="20" maxlength="1000"></textarea>
+            <div class="form-text text-end">
+              <span id="charCount">0</span>/1000 caracteres
+            </div>
+          </div>
+
+          <!-- Ubicación -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Ubicación <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+              <input type="text" class="form-control" name="ubicacion" required 
+                     placeholder="Ej: Sector 1 Box 10, etc."
+                     pattern="[A-Za-z0-9\s\-\.]+"
+                     title="Ingrese una ubicación válida">
+            </div>
+          </div>
+
+          <!-- Prioridad -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Prioridad <span class="text-danger">*</span></label>
+            <select class="form-select" name="prioridad" required>
+              <option value="">Seleccione nivel de prioridad</option>
+              <option value="Bajo">Bajo</option>
+              <option value="Medio">Medio</option>
+              <option value="Alto">Alto</option>
+            </select>
+          </div>
+
+          <!-- Tiempo Estimado -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tiempo Estimado (horas)</label>
+            <input type="number" class="form-control" name="tiempo_estimado" 
+                   min="1" max="24" step="0.5"
+                   placeholder="Ej: 2.5">
+          </div>
+
+          <!-- Costo Estimado -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Costo Estimado ($)</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" name="costo_estimado" 
+                     min="0" step="1000"
+                     placeholder="Ej: 50000">
+            </div>
+          </div>
+
+          <!-- Imágenes -->
+          <div class="col-12">
+            <label class="form-label fw-bold">Imágenes del Problema <small class="text-muted">(Opcional, hasta 3 fotos)</small></label>
+            <input type="file" class="form-control" name="foto" accept="image/*" multiple 
+                   onchange="updatePreview(this)" id="fotoInput">
+            <div id="preview" class="mt-2 d-flex flex-wrap gap-2"></div>
+            <div class="form-text">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB por imagen</div>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a href="{{ url_for('user_dashboard') }}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <i class="bi bi-send"></i> Enviar Solicitud
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Preview de imágenes y validaciones -->
+<script>
+function updatePreview(input) {
+  const preview = document.getElementById('preview');
+  preview.innerHTML = '';
+  const files = Array.from(input.files).slice(0, 3);
+  
+  // Validar tamaño y tipo de archivo
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+  
+  files.forEach(file => {
+    if (file.size > maxSize) {
+      alert(`El archivo ${file.name} excede el tamaño máximo permitido de 5MB`);
+      return;
+    }
+    if (!allowedTypes.includes(file.type)) {
+      alert(`El archivo ${file.name} no es un tipo de imagen válido`);
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.maxWidth = '120px';
+      img.style.borderRadius = '0.25rem';
+      img.style.boxShadow = '0 1px 4px rgba(0,0,0,0.2)';
+      preview.appendChild(img);
+    }
+    reader.readAsDataURL(file);
+  });
+}
+
+// Contador de caracteres
+document.querySelector('textarea[name="descripcion"]').addEventListener('input', function(e) {
+  const charCount = document.getElementById('charCount');
+  charCount.textContent = e.target.value.length;
+});
+
+// Validación del formulario
+document.getElementById('solicitudForm').addEventListener('submit', function(e) {
+  const descripcion = document.querySelector('textarea[name="descripcion"]');
+  if (descripcion.value.length < 20) {
+    e.preventDefault();
+    alert('La descripción debe tener al menos 20 caracteres');
+    return;
+  }
+  
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando...';
+});
+</script>
+{% endblock %}

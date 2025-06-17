@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Registro{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-5">
+  <h1 class="text-center fw-bold mt-4">Registro de Usuario</h1>
+  <h5 class="text-center mb-4 text-muted">Hospital San Agustín de Collipulli</h5>
+
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow border-0">
+        <div class="card-header text-center bg-secondary text-white">
+          <h4 class="mb-0">Crear una Cuenta</h4>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('register') }}">
+            <div class="mb-3">
+              <label for="nombre" class="form-label">Nombre completo *</label>
+              <input type="text" class="form-control" id="nombre" name="nombre" required>
+            </div>
+            <div class="mb-3">
+              <label for="username" class="form-label">Nombre de usuario *</label>
+              <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Correo electrónico *</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Contraseña *</label>
+              <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+              <label for="role" class="form-label">Rol *</label>
+              <select class="form-select" id="role" name="role" required>
+                <option value="">Seleccione un rol</option>
+                <option value="user">Usuario</option>
+                <option value="tecnico">Técnico</option>
+              </select>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-success">Registrar</button>
+            </div>
+          </form>
+
+          <div class="mt-4 text-center">
+            ¿Ya tienes una cuenta?
+            <a href="{{ url_for('login') }}">Inicia sesión aquí</a>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

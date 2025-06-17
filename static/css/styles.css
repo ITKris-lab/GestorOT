@@ -1,0 +1,58 @@
+/* General */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Títulos */
+h1, h2, h3, h4 {
+  color: #003366;
+  font-weight: 600;
+}
+
+/* Botones */
+.btn-primary {
+  background-color: #003366;
+  border-color: #003366;
+}
+.btn-primary:hover {
+  background-color: #00509d;
+  border-color: #00509d;
+}
+.btn-outline-primary {
+  color: #003366;
+  border-color: #003366;
+}
+.btn-outline-primary:hover {
+  background-color: #003366;
+  color: #fff;
+}
+
+/* Sidebar */
+.bg-dark {
+  background-color: #38383a !important;
+}
+.nav .btn.active {
+  background-color: #ffffff !important;
+  color: #002244 !important;
+  font-weight: bold;
+}
+
+/* Tablas */
+.table th {
+  background-color: #38383a;
+  color: #ffffff;
+}
+.table td, .table th {
+  vertical-align: middle;
+}
+
+/* Flash alerts */
+.alert-success {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+.alert-danger {
+  background-color: #f8d7da;
+  color: #842029;
+}
