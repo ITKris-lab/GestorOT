@@ -1,3 +1,6 @@
+pip>=23.2
+setuptools>=68.0
+wheel>=0.40
 Flask==2.3.3
 Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.2
@@ -5,7 +8,7 @@ Flask-SocketIO==5.3.6
 Werkzeug==2.3.7
 python-dotenv==1.0.0
 psycopg2-binary==2.9.9
-pandas==2.1.1
+pandas==2.1.4
 openpyxl==3.1.2
 supabase==2.0.3
 gunicorn==21.2.0
