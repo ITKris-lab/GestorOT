@@ -13,6 +13,7 @@ import pandas as pd
 from flask import send_file
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
 
 load_dotenv()
 
@@ -23,11 +24,11 @@ def notificar_tecnicos_y_admins(mensaje, tipo='info'):
         'timestamp': datetime.utcnow().isoformat()
     })
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+db = SQLAlchemy(app)
 
 # Inicializar Supabase
 supabase: Client = create_client(
@@ -651,4 +652,5 @@ with app.app_context():
         print("ℹ️ Usuario admin ya existe.")
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
+    socketio.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+
