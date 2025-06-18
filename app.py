@@ -35,7 +35,7 @@ supabase: Client = create_client(
     os.getenv('SUPABASE_KEY')
 )
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='threading')
 
 # Setup de Flask-Login
 login_manager = LoginManager()
