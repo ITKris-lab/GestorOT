@@ -1,16 +1,13 @@
 services:
   - type: web
-    name: gestorot
+    name: mantenimiento-flask
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
-      - key: DATABASE_URL
-        sync: false
       - key: SECRET_KEY
         sync: false
-    build:
-      packages:
-        - build-essential
-        - libpq-dev
-        - python3-dev
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false 
