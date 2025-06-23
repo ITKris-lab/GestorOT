@@ -162,6 +162,10 @@ def logout():
     flash("Sesión cerrada", "info")
     return redirect(url_for('login'))
 
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
+
 # -------------------
 # DASHBOARD POR ROL
 # -------------------
