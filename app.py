@@ -49,7 +49,7 @@ class User(UserMixin):
 
     @staticmethod
     def get(user_id):
-        result = supabase.table("user").select("*").eq("id", user_id).execute()
+        result = supabase.table("users").select("*").eq("id", user_id).execute()
         if result.data:
             u = result.data[0]
             return User(u['id'], u['username'], u['password'], u['role'], u['nombre'], u['email'])
@@ -57,7 +57,7 @@ class User(UserMixin):
 
     @staticmethod
     def get_by_username(username):
-        result = supabase.table("user").select("*").eq("username", username).execute()
+        result = supabase.table("users").select("*").eq("username", username).execute()
         if result.data:
             u = result.data[0]
             return User(u['id'], u['username'], u['password'], u['role'], u['nombre'], u['email'])
@@ -65,12 +65,12 @@ class User(UserMixin):
 
     @staticmethod
     def get_tecnicos():
-        result = supabase.table("user").select("*").eq("role", "tecnico").execute()
+        result = supabase.table("users").select("*").eq("role", "tecnico").execute()
         return result.data or []
 
     @staticmethod
     def all():
-        result = supabase.table("user").select("*").order("role").order("nombre").execute()
+        result = supabase.table("users").select("*").order("role").order("nombre").execute()
         return result.data or []
 
 @login_manager.user_loader
@@ -336,13 +336,13 @@ def admin_usuarios():
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    usuarios = supabase.table('user').select('*').order('role').execute().data
+    usuarios = supabase.table('users').select('*').order('role').execute().data
     return render_template('admin/usuarios.html', usuarios=usuarios)
 
 @app.route('/admin/usuarios/nuevo', methods=['GET', 'POST'])
 @login_required
 def admin_usuario_nuevo():
-    if current_.role != 'admin':
+    if current_user.role != 'admin':
         return redirect(url_for('login'))
 
     if request.method == 'POST':
@@ -353,12 +353,12 @@ def admin_usuario_nuevo():
             'role': request.form['role'],
             'password': generate_password_hash(request.form['password'])
         }
-        existing = supabase.table('user').select('id').eq('username', datos['username']).execute().data
+        existing = supabase.table('users').select('id').eq('username', datos['username']).execute().data
         if existing:
             flash('El usuario ya existe', 'warning')
             return redirect(url_for('admin_usuario_nuevo'))
 
-        supabase.table('user').insert(datos).execute()
+        supabase.table('users').insert(datos).execute()
         flash('Usuario creado correctamente', 'success')
         return redirect(url_for('admin_usuarios'))
 
@@ -370,7 +370,7 @@ def admin_usuario_editar(user_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    user = supabase.table('user').select('*').eq('id', user_id).single().execute().data
+    user = supabase.table('users').select('*').eq('id', user_id).single().execute().data
 
     if request.method == 'POST':
         actualizacion = {
@@ -382,7 +382,7 @@ def admin_usuario_editar(user_id):
         if request.form['password']:
             actualizacion['password'] = generate_password_hash(request.form['password'])
 
-        supabase.table('user').update(actualizacion).eq('id', user_id).execute()
+        supabase.table('users').update(actualizacion).eq('id', user_id).execute()
         flash('Usuario actualizado correctamente', 'success')
         return redirect(url_for('admin_usuarios'))
 
@@ -394,7 +394,7 @@ def admin_usuario_eliminar(user_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    supabase.table('user').delete().eq('id', user_id).execute()
+    supabase.table('users').delete().eq('id', user_id).execute()
     flash('Usuario eliminado', 'success')
     return redirect(url_for('admin_usuarios'))
 
@@ -464,3 +464,21 @@ def handle_connect():
 def handle_disconnect():
     if current_user.is_authenticated:
         emit('usuario_desconectado', {'id': current_user.id, 'rol': current_user.role})
+
+# Usuario admin por defecto (solo si no existe)
+with app.app_context():
+    res = supabase.table("users").select("*").eq("username", "admin").execute()
+    if not res.data:
+        admin = {
+            "username": "admin",
+            "password": generate_password_hash("admin123"),
+            "nombre": "Administrador del Sistema",
+            "email": "admin@hospital.cl",
+            "role": "admin"
+        }
+        supabase.table("users").insert(admin).execute()
+        print("✅ Usuario admin creado con éxito.")
+    else:
+        print("ℹ️ Usuario admin ya existe.")
+
+        
