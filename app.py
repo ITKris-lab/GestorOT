@@ -332,13 +332,13 @@ def admin_usuarios():
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    usuarios = supabase.table('users').select('*').order('role').execute().data
+    usuarios = supabase.table('user').select('*').order('role').execute().data
     return render_template('admin/usuarios.html', usuarios=usuarios)
 
 @app.route('/admin/usuarios/nuevo', methods=['GET', 'POST'])
 @login_required
 def admin_usuario_nuevo():
-    if current_user.role != 'admin':
+    if current_.role != 'admin':
         return redirect(url_for('login'))
 
     if request.method == 'POST':
@@ -349,12 +349,12 @@ def admin_usuario_nuevo():
             'role': request.form['role'],
             'password': generate_password_hash(request.form['password'])
         }
-        existing = supabase.table('users').select('id').eq('username', datos['username']).execute().data
+        existing = supabase.table('user').select('id').eq('username', datos['username']).execute().data
         if existing:
             flash('El usuario ya existe', 'warning')
             return redirect(url_for('admin_usuario_nuevo'))
 
-        supabase.table('users').insert(datos).execute()
+        supabase.table('user').insert(datos).execute()
         flash('Usuario creado correctamente', 'success')
         return redirect(url_for('admin_usuarios'))
 
@@ -366,7 +366,7 @@ def admin_usuario_editar(user_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    user = supabase.table('users').select('*').eq('id', user_id).single().execute().data
+    user = supabase.table('user').select('*').eq('id', user_id).single().execute().data
 
     if request.method == 'POST':
         actualizacion = {
@@ -378,7 +378,7 @@ def admin_usuario_editar(user_id):
         if request.form['password']:
             actualizacion['password'] = generate_password_hash(request.form['password'])
 
-        supabase.table('users').update(actualizacion).eq('id', user_id).execute()
+        supabase.table('user').update(actualizacion).eq('id', user_id).execute()
         flash('Usuario actualizado correctamente', 'success')
         return redirect(url_for('admin_usuarios'))
 
@@ -390,7 +390,7 @@ def admin_usuario_eliminar(user_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
 
-    supabase.table('users').delete().eq('id', user_id).execute()
+    supabase.table('user').delete().eq('id', user_id).execute()
     flash('Usuario eliminado', 'success')
     return redirect(url_for('admin_usuarios'))
 
@@ -448,7 +448,7 @@ def exportar_excel():
 @app.route('/verificar_usuario')
 def verificar_usuario():
     username = request.args.get('username')
-    exists = supabase.table('users').select('id').eq('username', username).execute().data
+    exists = supabase.table('user').select('id').eq('username', username).execute().data
     return {'exists': bool(exists)}
 
 @socketio.on('connect')
