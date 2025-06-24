@@ -7,4 +7,3 @@ pandas
 openpyxl
 python-dotenv
 werkzeug
-eventlet
