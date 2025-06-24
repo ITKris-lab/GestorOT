@@ -7,3 +7,4 @@ pandas
 openpyxl
 python-dotenv
 werkzeug
+eventlet==0.33.3
