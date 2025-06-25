@@ -22,7 +22,7 @@ app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SocketIO (threading para compatibilidad en Render)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='threading')
 
 # Cliente Supabase
 supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
