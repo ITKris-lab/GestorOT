@@ -169,7 +169,7 @@ def admin_dashboard():
 def user_dashboard():
     if current_user.role != 'user':
         return redirect(url_for('login'))
-    resp = supabase.table('solicitudes') \
+    resp = supabase.table('solicitud') \
                    .select('*') \
                    .eq('usuario_id', current_user.id) \
                    .order('fecha_creacion', desc=True) \
@@ -263,7 +263,7 @@ def eliminar_solicitud(solicitud_id):
 def gestion_orden(id):
     if current_user.role != 'tecnico':
         return redirect(url_for('login'))
-    resp = supabase.table('solicitudes').select('*').eq('id', id).execute()
+    resp = supabase.table('solicitud').select('*').eq('id', id).execute()
     s = resp.data[0] if resp.data else None
     if request.method == 'POST':
         ud = {
