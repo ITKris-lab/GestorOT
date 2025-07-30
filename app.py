@@ -147,7 +147,7 @@ def admin_dashboard():
         flash("Acceso denegado", "danger")
         return redirect(url_for('login'))
 
-    resp = supabase.table('solicitudes').select('*') \
+    resp = supabase.table('solicitud').select('*') \
                    .order('fecha_creacion', desc=True).execute()
     solicitudes = resp.data or []
 
@@ -206,7 +206,7 @@ def nueva_solicitud():
             fn = f"{uuid.uuid4().hex}_{secure_filename(foto.filename)}"
             foto.save(os.path.join(app.config['UPLOAD_FOLDER'], fn))
             data['foto'] = fn
-        supabase.table('solicitudes').insert(data).execute()
+        supabase.table('solicitud').insert(data).execute()
         flash('Solicitud creada exitosamente', 'success')
         return redirect(url_for('user_dashboard'))
     return render_template('user/solicitud.html')
@@ -217,7 +217,7 @@ def nueva_solicitud():
 def asignar_tecnicos(solicitud_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
-    resp = supabase.table('solicitudes').select('*').eq('id', solicitud_id).execute()
+    resp = supabase.table('solicitud').select('*').eq('id', solicitud_id).execute()
     solicitud = resp.data[0] if resp.data else None
     tecnicos = User.get_tecnicos()
     if request.method == 'POST':
@@ -246,14 +246,14 @@ def asignar_tecnicos(solicitud_id):
 def eliminar_solicitud(solicitud_id):
     if current_user.role != 'admin':
         return redirect(url_for('login'))
-    resp = supabase.table('solicitudes').select('*').eq('id', solicitud_id).execute()
+    resp = supabase.table('solicitud').select('*').eq('id', solicitud_id).execute()
     s = resp.data[0] if resp.data else {}
     for fld in ('foto', 'firma'):
         fn = s.get(fld)
         if fn:
             try: os.remove(os.path.join(app.config['UPLOAD_FOLDER'], fn))
             except: pass
-    supabase.table('solicitudes').delete().eq('id', solicitud_id).execute()
+    supabase.table('solicitud').delete().eq('id', solicitud_id).execute()
     flash("Solicitud eliminada", "success")
     return redirect(url_for('admin_dashboard'))
 
@@ -282,7 +282,7 @@ def gestion_orden(id):
             with open(os.path.join(app.config['UPLOAD_FOLDER'], fn), "wb") as f:
                 f.write(bin_data)
             ud['firma'] = fn
-        supabase.table('solicitudes').update(ud).eq('id', id).execute()
+        supabase.table('solicitud').update(ud).eq('id', id).execute()
         notificar_tecnicos_y_admins(
             f"La solicitud #{id} cambió a {ud['estado']}", 'estado'
         )
@@ -356,7 +356,7 @@ def admin_usuario_eliminar(user_id):
 def reportes():
     if current_user.role not in ['admin', 'tecnico']:
         return redirect(url_for('login'))
-    q = supabase.table('solicitudes').select('*')
+    q = supabase.table('solicitud').select('*')
     estado = request.form.get('estado', 'Todos')
     if estado != 'Todos':
         q = q.eq('estado', estado)
@@ -371,7 +371,7 @@ def reportes():
 def exportar_excel():
     if current_user.role not in ['admin', 'tecnico']:
         return redirect(url_for('login'))
-    q = supabase.table('solicitudes').select('*')
+    q = supabase.table('solicitud').select('*')
     # aplicar mismos filtros...
     datos = q.execute().data or []
     df = pd.DataFrame(datos)
