@@ -169,23 +169,12 @@ def admin_dashboard():
 def user_dashboard():
     if current_user.role != 'user':
         return redirect(url_for('login'))
-    resp = supabase.table('solicitud') \
+    resp = supabase.table('solicitudes') \
                    .select('*') \
                    .eq('usuario_id', current_user.id) \
                    .order('fecha_creacion', desc=True) \
                    .execute()
-    
-    solicitudes = resp.data or []
-
-# 🔧 Convertir fecha_creacion a datetime para evitar errores con .strftime()
-for s in solicitudes:
-    if isinstance(s.get("fecha_creacion"), str):
-        try:
-            s["fecha_creacion"] = datetime.fromisoformat(s["fecha_creacion"].replace("Z", ""))
-        except Exception:
-            pass
-
-    return render_template('user/dashboard.html', solicitudes=solicitudes)
+    return render_template('user/dashboard.html', solicitudes=resp.data or [])
 
 @app.route('/tecnico/dashboard')
 @login_required
