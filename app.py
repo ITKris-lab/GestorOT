@@ -103,7 +103,12 @@ def login():
         if user and check_password_hash(user.password, request.form['password']):
             login_user(user)
             flash('Bienvenido', 'success')
-            return redirect(url_for(f"{user.role}_dashboard"))
+            if user.role == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            elif user.role == 'tecnico':
+                return redirect(url_for('tecnico_dashboard'))
+            elif user.role == 'user':
+                return redirect(url_for('user_dashboard'))
         flash('Credenciales inválidas', 'danger')
     return render_template('auth/login.html')
 
@@ -151,8 +156,14 @@ def admin_dashboard():
                    .order('fecha_creacion', desc=True).execute()
     solicitudes = resp.data or []
 
-    # Enriquecer con usuario y técnicos asignados
+    # Convertir fechas de strings a objetos datetime
     for s in solicitudes:
+        if 'fecha_creacion' in s and isinstance(s['fecha_creacion'], str):
+            s['fecha_creacion'] = datetime.fromisoformat(s['fecha_creacion'])
+        if 'fecha_finalizacion' in s and isinstance(s['fecha_finalizacion'], str):
+            s['fecha_finalizacion'] = datetime.fromisoformat(s['fecha_finalizacion']) if s['fecha_finalizacion'] else None
+
+        # Enriquecer con usuario y técnicos asignados
         u = supabase.table('users').select('nombre').eq('id', s['usuario_id']).execute().data
         s['usuario'] = u[0] if u else {'nombre': 'Desconocido'}
         asigns = supabase.table('asignaciones_tecnicos') \
@@ -174,7 +185,16 @@ def user_dashboard():
                    .eq('usuario_id', current_user.id) \
                    .order('fecha_creacion', desc=True) \
                    .execute()
-    return render_template('user/dashboard.html', solicitudes=resp.data or [])
+    solicitudes = resp.data or []
+    
+    # Convertir fechas de strings a objetos datetime
+    for s in solicitudes:
+        if 'fecha_creacion' in s and isinstance(s['fecha_creacion'], str):
+            s['fecha_creacion'] = datetime.fromisoformat(s['fecha_creacion'])
+        if 'fecha_finalizacion' in s and isinstance(s['fecha_finalizacion'], str):
+            s['fecha_finalizacion'] = datetime.fromisoformat(s['fecha_finalizacion']) if s['fecha_finalizacion'] else None
+            
+    return render_template('user/dashboard.html', solicitudes=solicitudes)
 
 @app.route('/tecnico/dashboard')
 @login_required
@@ -182,7 +202,16 @@ def tecnico_dashboard():
     if current_user.role != 'tecnico':
         return redirect(url_for('login'))
     resp = supabase.rpc('solicitudes_por_tecnico', {'tecnico_id': current_user.id}).execute()
-    return render_template('tecnico/dashboard.html', solicitudes=resp.data or [])
+    solicitudes = resp.data or []
+    
+    # Convertir fechas de strings a objetos datetime
+    for s in solicitudes:
+        if 'fecha_creacion' in s and isinstance(s['fecha_creacion'], str):
+            s['fecha_creacion'] = datetime.fromisoformat(s['fecha_creacion'])
+        if 'fecha_finalizacion' in s and isinstance(s['fecha_finalizacion'], str):
+            s['fecha_finalizacion'] = datetime.fromisoformat(s['fecha_finalizacion']) if s['fecha_finalizacion'] else None
+            
+    return render_template('tecnico/dashboard.html', solicitudes=solicitudes)
 
 # Crear nueva solicitud
 @app.route('/user/solicitud', methods=['GET', 'POST'])
@@ -364,6 +393,14 @@ def reportes():
     if fi: q = q.gte('fecha_creacion', fi)
     if ff: q = q.lte('fecha_creacion', ff)
     data = q.execute().data or []
+    
+    # Convertir fechas de strings a objetos datetime
+    for s in data:
+        if 'fecha_creacion' in s and isinstance(s['fecha_creacion'], str):
+            s['fecha_creacion'] = datetime.fromisoformat(s['fecha_creacion'])
+        if 'fecha_finalizacion' in s and isinstance(s['fecha_finalizacion'], str):
+            s['fecha_finalizacion'] = datetime.fromisoformat(s['fecha_finalizacion']) if s['fecha_finalizacion'] else None
+            
     return render_template('reportes.html', solicitudes=data)
 
 @app.route('/reportes/exportar_excel', methods=['POST'])
@@ -372,7 +409,12 @@ def exportar_excel():
     if current_user.role not in ['admin', 'tecnico']:
         return redirect(url_for('login'))
     q = supabase.table('solicitud').select('*')
-    # aplicar mismos filtros...
+    estado = request.form.get('estado', 'Todos')
+    if estado != 'Todos':
+        q = q.eq('estado', estado)
+    fi, ff = request.form.get('fecha_inicio'), request.form.get('fecha_fin')
+    if fi: q = q.gte('fecha_creacion', fi)
+    if ff: q = q.lte('fecha_creacion', ff)
     datos = q.execute().data or []
     df = pd.DataFrame(datos)
     buf = io.BytesIO()
@@ -409,7 +451,7 @@ with app.app_context():
             "username": "admin",
             "password": generate_password_hash("admin123"),
             "nombre": "Administrador del Sistema",
-            "email": "admin@hospital.cl",
+            "email": "christopher.burdiles@araucanianorte.cl",
             "role": "admin"
         }).execute()
         print("✅ Usuario admin creado con éxito.")
