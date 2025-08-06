@@ -183,4 +183,5 @@ def user_dashboard():
 
 # --- Punto de arranque ---
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    port = int(os.environ.get("PORT", 5000))  # Usa el puerto de Render
+    socketio.run(app, host='0.0.0.0', port=port)  # Escucha en todas las interfaces
