@@ -116,7 +116,28 @@ def admin_dashboard():
         u = supabase.table('users').select('nombre').eq('id', s['usuario_id']).execute().data
         s['usuario'] = u[0] if u else {'nombre': 'Desconocido'}
     return render_template('admin/dashboard.html', solicitudes=solicitudes)
-
+    
+@app.route('/admin/solicitud/editar/<int:solicitud_id>', methods=['GET', 'POST'])
+@login_required
+def editar_solicitud(solicitud_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        # Lógica para actualizar la solicitud
+        data = {
+            'tipo_trabajo': request.form['tipo_trabajo'],
+            'estado': request.form['estado'],
+            # ... otros campos
+        }
+        supabase.table('solicitud').update(data).eq('id', solicitud_id).execute()
+        flash('Solicitud actualizada', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    # Obtener la solicitud para editar
+    resp = supabase.table('solicitud').select('*').eq('id', solicitud_id).execute()
+    solicitud = resp.data[0] if resp.data else None
+    return render_template('admin/editar_solicitud.html', solicitud=solicitud)
 @app.route('/tecnico/dashboard')
 @login_required
 def tecnico_dashboard():
