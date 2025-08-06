@@ -99,7 +99,12 @@ def logout():
     logout_user()
     flash("Sesión cerrada", "info")
     return redirect(url_for('login'))
-
+    
+# Ruta raíz redirige a login
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
+    
 # --- Dashboards ---
 @app.route('/admin/dashboard')
 @login_required
