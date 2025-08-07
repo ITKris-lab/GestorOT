@@ -181,7 +181,6 @@ def user_dashboard():
     solicitudes = [convertir_fechas(s) for s in resp.data] if resp.data else []
     return render_template('user/dashboard.html', solicitudes=solicitudes)
 
-# --- Punto de arranque ---
+# Punto de arranque (para desarrollo local)
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # Usa el puerto de Render
-    socketio.run(app, host='0.0.0.0', port=port)  # Escucha en todas las interfaces
+    socketio.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
