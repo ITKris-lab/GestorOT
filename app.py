@@ -99,17 +99,21 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = User.get_by_username(request.form['username'])
-        if user and check_password_hash(user.password, request.form['password']):
-            login_user(user)
-            flash('Bienvenido', 'success')
-            if user.role == 'admin':
-                return redirect(url_for('admin_dashboard'))
-            elif user.role == 'tecnico':
-                return redirect(url_for('tecnico_dashboard'))
-            elif user.role == 'user':
-                return redirect(url_for('user_dashboard'))
-        flash('Credenciales inválidas', 'danger')
+        try:
+            user = User.get_by_username(request.form['username'])
+            if user and check_password_hash(user.password, request.form['password']):
+                login_user(user)
+                flash('Bienvenido', 'success')
+                if user.role == 'admin':
+                    return redirect(url_for('admin_dashboard'))
+                elif user.role == 'tecnico':
+                    return redirect(url_for('tecnico_dashboard'))
+                elif user.role == 'user':
+                    return redirect(url_for('user_dashboard'))
+            flash('Credenciales inválidas', 'danger')
+        except Exception as e:
+            flash('Error al iniciar sesión', 'danger')
+            print(f"Error en login: {e}")  # Para ver el error en los logs de Render
     return render_template('auth/login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
