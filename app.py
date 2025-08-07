@@ -92,7 +92,27 @@ def login():
                 return redirect(url_for('user_dashboard'))
         flash('Credenciales inválidas', 'danger')
     return render_template('auth/login.html')
-
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        if User.get_by_username(username):
+            flash('Usuario ya existe', 'danger')
+            return redirect(url_for('register'))
+        
+        nuevo_usuario = {
+            'username': username,
+            'password': generate_password_hash(request.form['password']),
+            'nombre': request.form['nombre'],
+            'email': request.form['email'],
+            'role': request.form.get('role', 'user')
+        }
+        supabase.table('users').insert(nuevo_usuario).execute()
+        flash('Registro exitoso!', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('auth/register.html')
+    
 @app.route('/logout')
 @login_required
 def logout():
