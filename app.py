@@ -102,7 +102,7 @@ def login():
 
 # Ruta de registro
 @app.route('/register', methods=['GET', 'POST'])
-def registro():
+def register():
     if request.method == 'POST':
         username = request.form['username']
         nombre = request.form['nombre']
