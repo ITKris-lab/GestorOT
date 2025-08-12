@@ -125,7 +125,7 @@ def registro():
         flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
         return redirect(url_for('login'))
 
-    return render_template('auth/registro.html')
+    return render_template('auth/register.html')
 
 # Dashboard administrador
 @app.route('/admin/dashboard')
