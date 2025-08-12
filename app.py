@@ -98,7 +98,7 @@ def login():
                 return redirect(url_for('user_dashboard'))
         else:
             flash('Usuario o contraseña incorrectos', 'danger')
-    return render_template('login.html')
+    return render_template('auth/login.html')
 
 # Ruta de registro
 @app.route('/registro', methods=['GET', 'POST'])
@@ -125,7 +125,7 @@ def registro():
         flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
         return redirect(url_for('login'))
 
-    return render_template('registro.html')
+    return render_template('auth/registro.html')
 
 # Dashboard administrador
 @app.route('/admin/dashboard')
