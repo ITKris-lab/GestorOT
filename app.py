@@ -101,7 +101,7 @@ def login():
     return render_template('auth/login.html')
 
 # Ruta de registro
-@app.route('/registro', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
         username = request.form['username']
@@ -111,7 +111,7 @@ def registro():
 
         if User.get_by_username(username):
             flash('El nombre de usuario ya existe.', 'danger')
-            return redirect(url_for('registro'))
+            return redirect(url_for('register'))
 
         hashed_password = generate_password_hash(password)
         user_data = {
